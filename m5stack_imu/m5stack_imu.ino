@@ -15,5 +15,9 @@ void loop(void) {
   M5.Imu.getGyroData(&gx, &gy, &gz);
   M5.Lcd.setCursor(0, 50);
   M5.Lcd.printf("gyro:% 4d,% 4d,% 4d", (int)gx, (int)gy, (int)gz);
+  float pitch, roll, yaw;
+  M5.Imu.getAhrsData(&pitch, &roll, &yaw);
+  M5.Lcd.setCursor(0, 100);
+  M5.Lcd.printf("arhs:% 4d,% 4d,% 4d", (int)pitch, (int)roll, (int)yaw);
   delay(1000);
 }
