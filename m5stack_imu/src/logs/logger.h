@@ -9,6 +9,9 @@ class Logger {
   ~Logger();
   void Initialize(void);
   void Save(ImuData imu_data);
+
+ private:
+  int file_number_;
 };
 
 #endif  // M5STACK_IMU_SRC_LOGS_LOGGER_H_
