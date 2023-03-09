@@ -9,12 +9,12 @@ void setup(void) {
   M5.begin();
   M5.Imu.Init();
   M5.Lcd.setTextSize(2);
-  if (SD.cardType() == CARD_NONE) {
-    M5.Lcd.setCursor(0, 150);
+  while (!SD.begin(TFCARD_CS_PIN)) {
+    M5.Lcd.setCursor(0, 0);
     M5.Lcd.printf("TF card isn't mounted.\n");
-  } else {
-    theLogger.Initialize();
   }
+  M5.Lcd.clear();
+  theLogger.Initialize();
 }
 
 void loop(void) {
