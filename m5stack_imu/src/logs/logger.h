@@ -12,6 +12,7 @@ class Logger {
 
  private:
   int file_number_;
+  bool is_initialized_;
 };
 
 #endif  // M5STACK_IMU_SRC_LOGS_LOGGER_H_
