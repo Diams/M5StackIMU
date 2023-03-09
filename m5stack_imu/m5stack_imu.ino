@@ -35,5 +35,7 @@ void loop(void) {
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
-  theLogger.Save(imu_data);
+  if (SD.cardType() != CARD_UNKNOWN) {
+    theLogger.Save(imu_data);
+  }
 }
