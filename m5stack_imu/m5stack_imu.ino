@@ -43,6 +43,6 @@ void loop(void) {
     theLogger.Save(imu_data);
   } else {
     M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("TF card is unmoutned.\n");
+    M5.Lcd.printf("TF card has be unmoutned.\n");
   }
 }
