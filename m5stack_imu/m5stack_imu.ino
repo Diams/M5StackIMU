@@ -1,5 +1,6 @@
 #include <M5Stack.h>
 
+#include "src/clocks/wifi_clock.h"
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
 
@@ -14,6 +15,7 @@ void setup(void) {
     M5.Lcd.printf("TF card isn't mounted.\n");
   }
   M5.Lcd.clear();
+  theWifiClock.Initialize();
   theLogger.Initialize();
 }
 

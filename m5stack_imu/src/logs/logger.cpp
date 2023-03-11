@@ -4,21 +4,32 @@
 
 #include <string>
 
+#include "../clocks/wifi_clock.h"
+
 static const char extention[] = ".csv";
 
 Logger::Logger() {
-  file_number_ = 0;
+  memset(file_path_, 0, sizeof(file_path_));
   is_initialized_ = false;
 }
 
 Logger::~Logger() {}
 
 void Logger::Initialize(void) {
-  for (int i = 1;; i++) {
-    std::string file_path = "/" + std::to_string(i) + std::string(extention);
-    if (!SD.exists(file_path.c_str())) {
-      file_number_ = i;
-      break;
+  if (theWifiClock.IsInitialized()) {
+    struct tm current_time;
+    theWifiClock.CurrentTime(&current_time);
+    snprintf(file_path_, sizeof(file_path_), "/%04d%02d%02d%02d%02d%02d.csv", current_time.tm_year + 1900,
+             current_time.tm_mon + 1, current_time.tm_mday, current_time.tm_hour, current_time.tm_min,
+             current_time.tm_sec);
+  } else {
+    for (int i = 1;; i++) {
+      std::string file_path = "/" + std::to_string(i) + std::string(extention);
+      if (!SD.exists(file_path.c_str())) {
+        memset(file_path_, 0, sizeof(file_path_));
+        memcpy(file_path_, file_path.c_str(), strlen(file_path.c_str()));
+        break;
+      }
     }
   }
   is_initialized_ = true;
@@ -26,9 +37,8 @@ void Logger::Initialize(void) {
 
 void Logger::Save(ImuData imu_data) {
   if (!is_initialized_) return;
-  std::string file_path = "/" + std::to_string(file_number_) + std::string(extention);
-  bool exists = SD.exists(file_path.c_str());
-  File file = SD.open(file_path.c_str(), FILE_APPEND);
+  bool exists = SD.exists(file_path_);
+  File file = SD.open(file_path_, FILE_APPEND);
   if (!exists) {
     file.printf(",acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,pitch,roll,yaw\n");
   }
