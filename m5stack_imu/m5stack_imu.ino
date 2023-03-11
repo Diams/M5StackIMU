@@ -15,8 +15,8 @@ void setup(void) {
     M5.Lcd.printf("TF card isn't mounted.\n");
   }
   M5.Lcd.clear();
-  theLogger.Initialize();
   theWifiClock.Initialize();
+  theLogger.Initialize();
 }
 
 void loop(void) {

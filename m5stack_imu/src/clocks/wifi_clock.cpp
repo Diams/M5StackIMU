@@ -16,18 +16,26 @@ void WifiClock::Initialize(void) {
       WiFi.disconnect(true);
       Serial.printf("Failed to connect to the access point.\n");
       WiFi.mode(WIFI_OFF);
+      is_initialized_ = false;
       return;
     }
   }
   configTime(9 * 60 * 60, 0, kNtpServer);
   struct tm tmp;
   if (!getLocalTime(&tmp)) {
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
     Serial.printf("Failed to obtain time.\n");
+    is_initialized_ = false;
+    return;
   }
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
+  is_initialized_ = true;
 }
 
-bool WifiClock::CurrentTime(struct tm* time_info) {}
+void WifiClock::CurrentTime(struct tm* time_info) { getLocalTime(time_info); }
+
+bool WifiClock::IsInitialized(void) { return is_initialized_; }
 
 WifiClock theWifiClock;

@@ -5,10 +5,14 @@
 
 class WifiClock {
  public:
-  WifiClock() {}
+  WifiClock() { is_initialized_ = false; }
   ~WifiClock() {}
   void Initialize(void);
-  bool CurrentTime(struct tm* time_info);
+  void CurrentTime(struct tm* time_info);
+  bool IsInitialized(void);
+
+ private:
+  bool is_initialized_;
 };
 
 extern WifiClock theWifiClock;

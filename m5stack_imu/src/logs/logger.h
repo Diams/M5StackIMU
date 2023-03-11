@@ -11,7 +11,7 @@ class Logger {
   void Save(ImuData imu_data);
 
  private:
-  int file_number_;
+  char file_path_[19 + 1];
   bool is_initialized_;
 };
 
