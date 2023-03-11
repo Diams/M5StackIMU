@@ -1,5 +1,6 @@
 #include <M5Stack.h>
 
+#include "src/clocks/wifi_clock.h"
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
 
@@ -15,6 +16,7 @@ void setup(void) {
   }
   M5.Lcd.clear();
   theLogger.Initialize();
+  theWifiClock.Initialize();
 }
 
 void loop(void) {
