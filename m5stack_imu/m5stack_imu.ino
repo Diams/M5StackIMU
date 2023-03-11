@@ -39,7 +39,7 @@ void loop(void) {
   };
   if (SD.cardType() != CARD_UNKNOWN) {
     M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("                       ");
+    M5.Lcd.printf("                           ");
     theLogger.Save(imu_data);
   } else {
     M5.Lcd.setCursor(0, 150);
