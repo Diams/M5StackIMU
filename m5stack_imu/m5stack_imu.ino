@@ -38,6 +38,11 @@ void loop(void) {
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
   if (SD.cardType() != CARD_UNKNOWN) {
+    M5.Lcd.setCursor(0, 150);
+    M5.Lcd.printf("                       ");
     theLogger.Save(imu_data);
+  } else {
+    M5.Lcd.setCursor(0, 150);
+    M5.Lcd.printf("TF card is unmoutned.\n");
   }
 }
