@@ -1,13 +1,20 @@
 #include <M5Stack.h>
 
+#include "src/imu/imu.h"
+#include "src/logs/logger.h"
+
+static Logger theLogger;
+
 void setup(void) {
   M5.begin();
   M5.Imu.Init();
   M5.Lcd.setTextSize(2);
-  if (SD.cardType() == CARD_NONE) {
-    M5.Lcd.setCursor(0, 150);
+  while (!SD.begin(TFCARD_CS_PIN)) {
+    M5.Lcd.setCursor(0, 0);
     M5.Lcd.printf("TF card isn't mounted.\n");
   }
+  M5.Lcd.clear();
+  theLogger.Initialize();
 }
 
 void loop(void) {
@@ -23,5 +30,12 @@ void loop(void) {
   M5.Imu.getAhrsData(&pitch, &roll, &yaw);
   M5.Lcd.setCursor(0, 100);
   M5.Lcd.printf("arhs:% 4d,% 4d,% 4d", (int)pitch, (int)roll, (int)yaw);
-  delay(1000);
+  ImuData imu_data = {
+      .acceleration_sensor = {.x = ax, .y = ay, .z = az},
+      .gyro_sensor = {.x = gx, .y = gy, .z = gz},
+      .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
+  };
+  if (SD.cardType() != CARD_UNKNOWN) {
+    theLogger.Save(imu_data);
+  }
 }
