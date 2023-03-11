@@ -46,5 +46,6 @@ void loop(void) {
     M5.Lcd.printf("TF card has be unmoutned.\n");
     SD.end();
     SD.begin(TFCARD_CS_PIN);
+    theLogger.Initialize();
   }
 }
