@@ -45,17 +45,6 @@ void loop(void) {
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
-  if (SD.cardType() == CARD_SDHC) {
-    M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("                           ");
-    theLogger.Save(imu_data);
-  } else {
-    M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("TF card has be unmoutned.\n");
-    SD.end();
-    SD.begin(TFCARD_CS_PIN);
-    theLogger.Initialize();
-  }
 }
 
 static void SamplingImuTask(void* pvParameter) {
