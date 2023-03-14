@@ -6,6 +6,9 @@
 
 static Logger theLogger;
 
+static void SamplingImuTask(void* pvParameter);
+static void SavingLogTask(void* pvParameter);
+
 void setup(void) {
   M5.begin();
   M5.Imu.Init();
@@ -49,3 +52,7 @@ void loop(void) {
     theLogger.Initialize();
   }
 }
+
+static void SamplingImuTask(void* pvParameter) {}
+
+static void SavingLogTask(void* pvParameter) {}
