@@ -59,8 +59,10 @@ void loop(void) {
 }
 
 static void SamplingImuTask(void* pvParameter) {
+  TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
     delay(1);
+    xTaskDelayUntil(&xLastWakeTime, 100.0 / portTICK_PERIOD_MS);
   }
 }
 
