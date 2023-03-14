@@ -6,6 +6,9 @@
 
 static Logger theLogger;
 
+static TaskHandle_t samplingImuTaskHandler;
+static TaskHandle_t savingImuTaskHandler;
+
 static void SamplingImuTask(void* pvParameter);
 static void SavingLogTask(void* pvParameter);
 
@@ -20,6 +23,8 @@ void setup(void) {
   M5.Lcd.clear();
   theWifiClock.Initialize();
   theLogger.Initialize();
+  xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 1);
+  xTaskCreatePinnedToCore(SavingLogTask, "SavingLogTask", 4096, NULL, 0, &savingImuTaskHandler, 0);
 }
 
 void loop(void) {
@@ -53,6 +58,14 @@ void loop(void) {
   }
 }
 
-static void SamplingImuTask(void* pvParameter) {}
+static void SamplingImuTask(void* pvParameter) {
+  while (true) {
+    delay(1);
+  }
+}
 
-static void SavingLogTask(void* pvParameter) {}
+static void SavingLogTask(void* pvParameter) {
+  while (true) {
+    delay(1);
+  }
+}
