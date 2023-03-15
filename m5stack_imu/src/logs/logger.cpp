@@ -14,10 +14,10 @@ typedef struct {
 } ImuRecord;
 
 static const char extention[] = ".csv";
+static const int kSavingPeriod = 2000;
 
 static ImuRecord buffer[2][512];
 static int nBuffers = COUNTOF(buffer);
-static int bufferSize = COUNTOF(buffer[0]);
 
 Logger::Logger() {
   memset(file_path_, 0, sizeof(file_path_));
@@ -25,11 +25,18 @@ Logger::Logger() {
   multipule_buffer_index_ = 0;
   written_index_ = 0;
   is_loggable_ = false;
+  buffer_size_ = 0;
 }
 
 Logger::~Logger() {}
 
-void Logger::Initialize(void) {
+void Logger::Initialize(int sampling_period) {
+  buffer_size_ = kSavingPeriod / sampling_period;
+  if (buffer_size_ == 0) {
+    buffer_size_ = 1;
+  } else if (buffer_size_ > COUNTOF(buffer[0])) {
+    buffer_size_ = COUNTOF(buffer[0]);
+  }
   if (theWifiClock.IsInitialized()) {
     struct tm current_time;
     theWifiClock.CurrentTime(&current_time);
@@ -53,7 +60,7 @@ void Logger::Sample(unsigned long timestamp, ImuData imu_data) {
   ImuRecord record = {.timestamp = timestamp, .data = imu_data};
   buffer[multipule_buffer_index_][written_index_] = record;
   written_index_++;
-  if (written_index_ == bufferSize) {
+  if (written_index_ == buffer_size_) {
     multipule_buffer_index_ = (multipule_buffer_index_ + 1) % nBuffers;
     written_index_ = 0;
     is_loggable_ = true;

@@ -7,7 +7,7 @@ class Logger {
  public:
   Logger();
   ~Logger();
-  void Initialize(void);
+  void Initialize(int sampling_period);
   void Sample(unsigned long timestamp, ImuData imu_data);
   void Save(ImuData imu_data);
 
@@ -17,6 +17,7 @@ class Logger {
   int multipule_buffer_index_;
   int written_index_;
   bool is_loggable_;
+  int buffer_size_;
 };
 
 #endif  // M5STACK_IMU_SRC_LOGS_LOGGER_H_

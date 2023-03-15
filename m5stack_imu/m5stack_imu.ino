@@ -4,6 +4,8 @@
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
 
+static const float kSamplingPeriod = 100;
+
 static ImuData currentImuData;
 
 static Logger theLogger;
@@ -25,7 +27,7 @@ void setup(void) {
   }
   M5.Lcd.clear();
   theWifiClock.Initialize();
-  theLogger.Initialize();
+  theLogger.Initialize((int)kSamplingPeriod);
   xMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 1);
   xTaskCreatePinnedToCore(SavingLogTask, "SavingLogTask", 4096, NULL, 0, &savingImuTaskHandler, 0);
@@ -59,7 +61,7 @@ static void SamplingImuTask(void* pvParameter) {
       xSemaphoreGive(xMutex);
     }
     delay(1);
-    xTaskDelayUntil(&xLastWakeTime, 100.0 / portTICK_PERIOD_MS);
+    xTaskDelayUntil(&xLastWakeTime, kSamplingPeriod / portTICK_PERIOD_MS);
   }
 }
 
