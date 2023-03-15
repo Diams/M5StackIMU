@@ -6,11 +6,25 @@
 
 #include "../clocks/wifi_clock.h"
 
+#define COUNTOF(arr) (sizeof(arr) / sizeof(arr[0]))
+
+typedef struct {
+  unsigned long timestamp;
+  ImuData data;
+} ImuRecord;
+
 static const char extention[] = ".csv";
+
+static ImuRecord buffer[2][512];
+static int nBuffers = COUNTOF(buffer);
+static int bufferSize = COUNTOF(buffer[0]);
 
 Logger::Logger() {
   memset(file_path_, 0, sizeof(file_path_));
   is_initialized_ = false;
+  multipule_buffer_index_ = 0;
+  written_index_ = 0;
+  is_loggable_ = false;
 }
 
 Logger::~Logger() {}
@@ -33,6 +47,17 @@ void Logger::Initialize(void) {
     }
   }
   is_initialized_ = true;
+}
+
+void Logger::Sample(unsigned long timestamp, ImuData imu_data) {
+  ImuRecord record = {.timestamp = timestamp, .data = imu_data};
+  buffer[multipule_buffer_index_][written_index_] = record;
+  written_index_++;
+  if (written_index_ == bufferSize) {
+    multipule_buffer_index_ = (multipule_buffer_index_ + 1) % nBuffers;
+    written_index_ = 0;
+    is_loggable_ = true;
+  }
 }
 
 void Logger::Save(ImuData imu_data) {

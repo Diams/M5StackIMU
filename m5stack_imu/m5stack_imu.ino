@@ -4,10 +4,13 @@
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
 
+static ImuData currentImuData;
+
 static Logger theLogger;
 
 static TaskHandle_t samplingImuTaskHandler;
 static TaskHandle_t savingImuTaskHandler;
+static SemaphoreHandle_t xMutex = NULL;
 
 static void SamplingImuTask(void* pvParameter);
 static void SavingLogTask(void* pvParameter);
@@ -23,6 +26,7 @@ void setup(void) {
   M5.Lcd.clear();
   theWifiClock.Initialize();
   theLogger.Initialize();
+  xMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 1);
   xTaskCreatePinnedToCore(SavingLogTask, "SavingLogTask", 4096, NULL, 0, &savingImuTaskHandler, 0);
 }
@@ -40,7 +44,7 @@ void loop(void) {
   M5.Imu.getAhrsData(&pitch, &roll, &yaw);
   M5.Lcd.setCursor(0, 100);
   M5.Lcd.printf("arhs:% 4d,% 4d,% 4d", (int)pitch, (int)roll, (int)yaw);
-  ImuData imu_data = {
+  currentImuData = {
       .acceleration_sensor = {.x = ax, .y = ay, .z = az},
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
@@ -50,6 +54,10 @@ void loop(void) {
 static void SamplingImuTask(void* pvParameter) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
+    if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
+      theLogger.Sample(millis(), currentImuData);
+      xSemaphoreGive(xMutex);
+    }
     delay(1);
     xTaskDelayUntil(&xLastWakeTime, 100.0 / portTICK_PERIOD_MS);
   }
