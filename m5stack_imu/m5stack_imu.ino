@@ -4,7 +4,19 @@
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
 
+static const float kSamplingPeriod = 100;
+
+static ImuData currentImuData;
+static char filePath[128];
+static bool isWritable = false;
+
 static Logger theLogger;
+
+static TaskHandle_t samplingImuTaskHandler;
+static TaskHandle_t savingImuTaskHandler;
+static SemaphoreHandle_t xMutex = NULL;
+
+static void SamplingImuTask(void* pvParameter);
 
 void setup(void) {
   M5.begin();
@@ -16,7 +28,9 @@ void setup(void) {
   }
   M5.Lcd.clear();
   theWifiClock.Initialize();
-  theLogger.Initialize();
+  theLogger.Initialize(filePath, (int)kSamplingPeriod);
+  xMutex = xSemaphoreCreateMutex();
+  xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 0);
 }
 
 void loop(void) {
@@ -32,20 +46,32 @@ void loop(void) {
   M5.Imu.getAhrsData(&pitch, &roll, &yaw);
   M5.Lcd.setCursor(0, 100);
   M5.Lcd.printf("arhs:% 4d,% 4d,% 4d", (int)pitch, (int)roll, (int)yaw);
-  ImuData imu_data = {
+  currentImuData = {
       .acceleration_sensor = {.x = ax, .y = ay, .z = az},
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
-  if (SD.cardType() == CARD_SDHC) {
-    M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("                           ");
-    theLogger.Save(imu_data);
-  } else {
-    M5.Lcd.setCursor(0, 150);
-    M5.Lcd.printf("TF card has be unmoutned.\n");
-    SD.end();
-    SD.begin(TFCARD_CS_PIN);
-    theLogger.Initialize();
+  isWritable = true;
+  File file = SD.open(filePath, FILE_APPEND);
+  if (file) {
+    if (xSemaphoreTake(xMutex, 0) == pdTRUE) {
+      theLogger.Save(file);
+      xSemaphoreGive(xMutex);
+    }
+    file.close();
+  }
+}
+
+static void SamplingImuTask(void* pvParameter) {
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  while (true) {
+    if (isWritable) {
+      if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
+        theLogger.Sample(millis(), currentImuData);
+        xSemaphoreGive(xMutex);
+      }
+    }
+    delay(1);
+    xTaskDelayUntil(&xLastWakeTime, kSamplingPeriod / portTICK_PERIOD_MS);
   }
 }
