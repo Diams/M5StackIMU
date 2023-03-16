@@ -8,6 +8,7 @@ static const float kSamplingPeriod = 100;
 
 static ImuData currentImuData;
 static char filePath[128];
+static bool isWritable = false;
 
 static Logger theLogger;
 
@@ -50,6 +51,7 @@ void loop(void) {
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
+  isWritable = true;
   File file = SD.open(filePath, FILE_APPEND);
   if (file) {
     if (xSemaphoreTake(xMutex, 0) == pdTRUE) {
@@ -63,9 +65,11 @@ void loop(void) {
 static void SamplingImuTask(void* pvParameter) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
-    if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
-      theLogger.Sample(millis(), currentImuData);
-      xSemaphoreGive(xMutex);
+    if (isWritable) {
+      if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
+        theLogger.Sample(millis(), currentImuData);
+        xSemaphoreGive(xMutex);
+      }
     }
     delay(1);
     xTaskDelayUntil(&xLastWakeTime, kSamplingPeriod / portTICK_PERIOD_MS);
