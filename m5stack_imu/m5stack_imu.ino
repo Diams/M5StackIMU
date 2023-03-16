@@ -16,6 +16,12 @@ static TaskHandle_t samplingImuTaskHandler;
 static TaskHandle_t savingImuTaskHandler;
 static SemaphoreHandle_t xMutex = NULL;
 
+static uint8_t GetButtonStatus(void);
+static void ExecuteButtonFunction(uint8_t button_status);
+static void AButtonFunction(void);
+static void BButtonFunction(void);
+static void CButtonFunction(void);
+
 static void SamplingImuTask(void* pvParameter);
 
 void setup(void) {
@@ -34,6 +40,8 @@ void setup(void) {
 }
 
 void loop(void) {
+  M5.update();
+  ExecuteButtonFunction(GetButtonStatus());
   float ax, ay, az;
   M5.Imu.getAccelData(&ax, &ay, &az);
   M5.Lcd.setCursor(0, 0);
@@ -61,6 +69,38 @@ void loop(void) {
     file.close();
   }
 }
+
+static uint8_t GetButtonStatus(void) {
+  uint8_t ret = 0;
+  if (M5.BtnA.wasPressed()) {
+    ret |= 0b100;
+  }
+  if (M5.BtnB.wasPressed()) {
+    ret |= 0b010;
+  }
+  if (M5.BtnC.wasPressed()) {
+    ret |= 0b001;
+  }
+  return ret;
+}
+
+static void ExecuteButtonFunction(uint8_t button_status) {
+  if (button_status & 0b100) {
+    AButtonFunction();
+  }
+  if (button_status & 0b010) {
+    BButtonFunction();
+  }
+  if (button_status & 0b001) {
+    CButtonFunction();
+  }
+}
+
+static void AButtonFunction(void) {}
+
+static void BButtonFunction(void) {}
+
+static void CButtonFunction(void) {}
 
 static void SamplingImuTask(void* pvParameter) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
