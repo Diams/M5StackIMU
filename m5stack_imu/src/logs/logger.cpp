@@ -14,7 +14,7 @@ typedef struct {
 } ImuRecord;
 
 static const char extention[] = ".csv";
-static const int kSavingPeriod = 2000;
+static const int kSavingPeriod = 4000;
 
 static ImuRecord buffer[2][512];
 static int nBuffers = COUNTOF(buffer);
@@ -30,7 +30,7 @@ Logger::Logger() {
 
 Logger::~Logger() {}
 
-void Logger::Initialize(int sampling_period) {
+void Logger::Initialize(char* file_path, int sampling_period) {
   buffer_size_ = kSavingPeriod / sampling_period;
   if (buffer_size_ == 0) {
     buffer_size_ = 1;
@@ -53,6 +53,10 @@ void Logger::Initialize(int sampling_period) {
       }
     }
   }
+  strncpy(file_path, file_path_, strlen(file_path_));
+  File file = SD.open(file_path_, FILE_WRITE);
+  file.printf(",acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,pitch,roll,yaw\n");
+  file.close();
   is_initialized_ = true;
 }
 
@@ -67,16 +71,17 @@ void Logger::Sample(unsigned long timestamp, ImuData imu_data) {
   }
 }
 
-void Logger::Save(ImuData imu_data) {
-  if (!is_initialized_) return;
-  bool exists = SD.exists(file_path_);
-  File file = SD.open(file_path_, FILE_APPEND);
-  if (!exists) {
-    file.printf(",acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z,pitch,roll,yaw\n");
+void Logger::Save(File file) {
+  if (!is_initialized_ || !is_loggable_) return;
+  int buffer_number = (multipule_buffer_index_ - 1) % nBuffers;
+  if (buffer_number < 0) buffer_number += nBuffers;
+  for (int i = 0; i < buffer_size_; i++) {
+    unsigned long timestamp = buffer[buffer_number][i].timestamp;
+    ImuData imu_data = buffer[buffer_number][i].data;
+    file.printf("%lu,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", timestamp, imu_data.acceleration_sensor.x,
+                imu_data.acceleration_sensor.y, imu_data.acceleration_sensor.z, imu_data.gyro_sensor.x,
+                imu_data.gyro_sensor.y, imu_data.gyro_sensor.z, imu_data.ahrs.pitch, imu_data.ahrs.roll,
+                imu_data.ahrs.yaw);
   }
-  file.printf("%lu,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", millis(), imu_data.acceleration_sensor.x,
-              imu_data.acceleration_sensor.y, imu_data.acceleration_sensor.z, imu_data.gyro_sensor.x,
-              imu_data.gyro_sensor.y, imu_data.gyro_sensor.z, imu_data.ahrs.pitch, imu_data.ahrs.roll,
-              imu_data.ahrs.yaw);
-  file.close();
+  is_loggable_ = false;
 }

@@ -7,6 +7,7 @@
 static const float kSamplingPeriod = 100;
 
 static ImuData currentImuData;
+static char filePath[128];
 
 static Logger theLogger;
 
@@ -15,7 +16,6 @@ static TaskHandle_t savingImuTaskHandler;
 static SemaphoreHandle_t xMutex = NULL;
 
 static void SamplingImuTask(void* pvParameter);
-static void SavingLogTask(void* pvParameter);
 
 void setup(void) {
   M5.begin();
@@ -27,10 +27,9 @@ void setup(void) {
   }
   M5.Lcd.clear();
   theWifiClock.Initialize();
-  theLogger.Initialize((int)kSamplingPeriod);
+  theLogger.Initialize(filePath, (int)kSamplingPeriod);
   xMutex = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 1);
-  xTaskCreatePinnedToCore(SavingLogTask, "SavingLogTask", 4096, NULL, 0, &savingImuTaskHandler, 0);
+  xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 0);
 }
 
 void loop(void) {
@@ -51,6 +50,14 @@ void loop(void) {
       .gyro_sensor = {.x = gx, .y = gy, .z = gz},
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
+  File file = SD.open(filePath, FILE_APPEND);
+  if (file) {
+    if (xSemaphoreTake(xMutex, 0) == pdTRUE) {
+      theLogger.Save(file);
+      xSemaphoreGive(xMutex);
+    }
+    file.close();
+  }
 }
 
 static void SamplingImuTask(void* pvParameter) {
@@ -62,11 +69,5 @@ static void SamplingImuTask(void* pvParameter) {
     }
     delay(1);
     xTaskDelayUntil(&xLastWakeTime, kSamplingPeriod / portTICK_PERIOD_MS);
-  }
-}
-
-static void SavingLogTask(void* pvParameter) {
-  while (true) {
-    delay(1);
   }
 }
