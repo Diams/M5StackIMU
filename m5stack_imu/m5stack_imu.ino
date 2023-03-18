@@ -9,6 +9,7 @@ static const float kSamplingPeriod = 100;
 static ImuData currentImuData;
 static char filePath[128];
 static bool isWritable = false;
+static bool isSavable = false;
 
 static Logger theLogger;
 
@@ -60,13 +61,17 @@ void loop(void) {
       .ahrs = {.pitch = pitch, .roll = roll, .yaw = yaw},
   };
   isWritable = true;
-  File file = SD.open(filePath, FILE_APPEND);
-  if (file) {
-    if (xSemaphoreTake(xMutex, 0) == pdTRUE) {
-      theLogger.Save(file);
-      xSemaphoreGive(xMutex);
+  if (isSavable) {
+    File file = SD.open(filePath, FILE_APPEND);
+    if (file) {
+      if (xSemaphoreTake(xMutex, 0) == pdTRUE) {
+        theLogger.Save(file);
+        xSemaphoreGive(xMutex);
+      }
+      file.close();
+    } else {
+      isSavable = false;
     }
-    file.close();
   }
 }
 
@@ -96,7 +101,7 @@ static void ExecuteButtonFunction(uint8_t button_status) {
   }
 }
 
-static void AButtonFunction(void) {}
+static void AButtonFunction(void) { isSavable = !isSavable; }
 
 static void BButtonFunction(void) {}
 
