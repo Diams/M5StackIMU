@@ -38,7 +38,6 @@ void setup(void) {
   }
   M5.Lcd.clear();
   theWifiClock.Initialize();
-  theLogger.Initialize(filePath, (int)kSamplingPeriod);
   xMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(SamplingImuTask, "SamplingImuTask", 4096, NULL, 2, &samplingImuTaskHandler, 0);
 }
@@ -105,7 +104,14 @@ static void ExecuteButtonFunction(uint8_t button_status) {
   }
 }
 
-static void AButtonFunction(void) { isSavable = !isSavable; }
+static void AButtonFunction(void) {
+  isSavable = !isSavable;
+  if (isSavable) {
+    if (SD.begin(TFCARD_CS_PIN)) {
+      theLogger.Initialize(filePath, (int)kSamplingPeriod);
+    }
+  }
+}
 
 static void BButtonFunction(void) {}
 
