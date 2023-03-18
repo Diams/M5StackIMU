@@ -1,5 +1,7 @@
 #include <M5Stack.h>
 
+#include <string>
+
 #include "src/clocks/wifi_clock.h"
 #include "src/imu/imu.h"
 #include "src/logs/logger.h"
@@ -22,6 +24,7 @@ static void ExecuteButtonFunction(uint8_t button_status);
 static void AButtonFunction(void);
 static void BButtonFunction(void);
 static void CButtonFunction(void);
+static void ShowAButtonLabel(void);
 
 static void SamplingImuTask(void* pvParameter);
 
@@ -73,6 +76,7 @@ void loop(void) {
       isSavable = false;
     }
   }
+  ShowAButtonLabel();
 }
 
 static uint8_t GetButtonStatus(void) {
@@ -119,4 +123,17 @@ static void SamplingImuTask(void* pvParameter) {
     delay(1);
     xTaskDelayUntil(&xLastWakeTime, kSamplingPeriod / portTICK_PERIOD_MS);
   }
+}
+
+static void ShowAButtonLabel(void) {
+  int32_t x_margin = 5;
+  int32_t y_margin = 5;
+  int32_t rect_width = (M5.Lcd.width() / 3) - (x_margin * 2);
+  int32_t rect_height = 40;
+  int32_t rect_x = 0 + x_margin;
+  int32_t rect_y = M5.Lcd.height() - y_margin - rect_height;
+  M5.Lcd.drawRect(rect_x, rect_y, rect_width, rect_height, WHITE);
+  std::string status_text = isSavable ? " STOP " : "START";
+  M5.Lcd.setTextDatum(4);
+  M5.Lcd.drawString(status_text.c_str(), rect_x + rect_width / 2, rect_y + rect_height / 2, 1);
 }
